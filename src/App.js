@@ -9,6 +9,8 @@ function App() {
   const baseURL = "https://localhost:7127/api/manager";
   const [data, setData]=useState([]);
   const [modalInsert, setModalInsert]=useState(false);
+  const [modalEdit, setModalEdit]=useState(false);
+  const [modalDelete, setModalDelete]=useState(false);
   const [userSelected, setUserSelected] = useState({
     id: '',
     name: '',
@@ -28,6 +30,17 @@ function App() {
   const openCLoseModalInsert=()=>{
     setModalInsert(!modalInsert);
   }
+  const openCLoseModalEdit=()=>{
+    setModalEdit(!modalEdit);
+  }
+  const openCLoseModalDelete=()=>{
+    setModalDelete(!modalDelete);
+  }
+  const userSelect_Update = (user, caso)=>{
+    setUserSelected(user);
+    (caso === "Edit")?
+    openCLoseModalEdit(): openCLoseModalDelete();
+  }
 
   //the request most be async because need work in backgroud
   const getRequest=async()=>{
@@ -44,6 +57,32 @@ function App() {
       openCLoseModalInsert();
     }).catch(error=>{console.log(error)});
   }
+  const putRequest=async()=>{
+
+    await axios.put(baseURL+"/"+userSelected.id, userSelected).then(response =>{
+      var resp = response.data;
+      var dataAux =  data;
+      dataAux.map(user=>{
+        if(user.id === userSelected.id){
+            user.name = resp.name;
+            user.last = resp.last;
+            user.address = resp.address;
+            user.phone = resp.phone;
+        }
+      })
+
+      openCLoseModalEdit();
+    }).catch(error=>{console.log(error)});
+  }
+  const deleteRequest=async()=>{
+    await axios.delete(baseURL+"/"+userSelected.id).then(response =>{
+      setData(data.filter(user => user.id!==response.data));
+      openCLoseModalDelete();
+    })
+    
+  }
+ 
+ 
   useEffect(()=>{
     getRequest();
   },[])
@@ -74,8 +113,8 @@ function App() {
                 <td>{user.address}</td>
                 <td>{user.phone}</td>
                 <td>
-                    <button className="btn btn-warning">Edit</button>{" "}
-                    <button className="btn btn-danger">Delete</button>
+                    <button className="btn btn-warning" onClick={()=>userSelect_Update(user, "Edit")}>Edit</button>{" "}
+                    <button className="btn btn-danger" onClick={()=>userSelect_Update(user, "Delete")}>Delete</button>
                   </td>
           </tr>       
           ))}
@@ -103,6 +142,40 @@ function App() {
           <ModalFooter>
             <button className='btn btn-primary'onClick={()=>postRequest()} >Insert</button>{"  "}
             <button className='btn btn-danger'onClick={()=>openCLoseModalInsert()}>Cancel</button>
+          </ModalFooter>
+        </Modal>
+
+        <Modal isOpen={modalEdit}>
+          <ModalHeader>Update User</ModalHeader>
+          <ModalBody>
+            <div className='form-group'>
+              <label>Id: </label>
+              <input type="text" className='form-control' readOnly value={userSelected && userSelected.id}/>
+              <br/>
+              <label>Name: </label>
+              <br />
+              <input type="text" className='form-control' name='name' onChange={handleCharge} value={userSelected && userSelected.name}  />
+              <label>LastName: </label>
+              <br />
+              <input type="text" className='form-control' name='last' onChange={handleCharge} value={userSelected && userSelected.last}/>
+              <label>Address: </label>
+              <br />
+              <input type="text" className='form-control' name='address' onChange={handleCharge} value={userSelected && userSelected.address} />
+              <label>Phone: </label>
+              <br />
+              <input type="text" className='form-control' name='phone' onChange={handleCharge} value={userSelected && userSelected.phone} />
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <button className='btn btn-primary'onClick={()=>putRequest()} >Edit</button>{"  "}
+            <button className='btn btn-danger'onClick={()=>openCLoseModalEdit()}>Cancel</button>
+          </ModalFooter>
+        </Modal>
+        <Modal isOpen={modalDelete}>
+          <ModalBody>Are you sure you want to delete this user?</ModalBody>
+          <ModalFooter>
+            <button className='btn btn-danger'onClick={()=>deleteRequest()} >Yes</button>{"  "}
+            <button className='btn btn-secondary'onClick={()=>openCLoseModalDelete()}>No</button>
           </ModalFooter>
         </Modal>
         </div>
